@@ -42,22 +42,10 @@ UploadFS.store.Local = function (options) {
      * @return {string}
      */
     store.getFilePath = function (fileId) {
-        var file = store.getCollection().findOne(fileId, {
+        var file = this.getCollection().findOne(fileId, {
             fields: {extension: 1}
         });
-        return file && store.getPath() + '/' + fileId + '.' + file.extension;
-    };
-
-    /**
-     * Returns the file URL
-     * @param fileId
-     * @return {string}
-     */
-    store.getFileURL = function (fileId) {
-        var file = store.getCollection().findOne(fileId, {
-            fields: {extension: 1}
-        });
-        return file && Meteor.absoluteUrl('ufs/' + store.getName() + '/' + fileId + '.' + file.extension);
+        return file && this.getPath() + '/' + fileId + '.' + file.extension;
     };
 
     /**
@@ -114,68 +102,3 @@ UploadFS.store.Local = function (options) {
 
     return store;
 };
-
-
-if (Meteor.isServer) {
-    var zlib = Npm.require('zlib');
-
-    // Listen HTTP requests to serve files
-    WebApp.connectHandlers.use(function (req, res, next) {
-        // Check if request matches /ufs/store/file.ext
-        var match = /^\/ufs\/([^\/]+)\/([^\/]+)$/.exec(req.url);
-
-        if (match !== null) {
-            // Get store
-            var storeName = match[1];
-            var store = UploadFS.getStore(storeName);
-            if (!store) {
-                res.writeHead(404, {});
-                res.end();
-                return;
-            }
-
-            // Get file from database
-            var fileId = match[2].replace(/\.[^.]+$/, '');
-            var file = store.getCollection().findOne(fileId);
-            if (!file) {
-                res.writeHead(404, {});
-                res.end();
-                return;
-            }
-
-            // todo add security check if file is private
-
-            try {
-                // Get file stream
-                var rs = store.getReadStream(fileId);
-                var accept = req.headers['accept-encoding'] || '';
-
-                // Compress data if supported by the client
-                if (accept.match(/\bdeflate\b/)) {
-                    res.writeHead(200, {
-                        'Content-Encoding': 'deflate',
-                        'Content-Type': file.type
-                    });
-                    rs.pipe(zlib.createDeflate()).pipe(res);
-
-                } else if (accept.match(/\bgzip\b/)) {
-                    res.writeHead(200, {
-                        'Content-Encoding': 'gzip',
-                        'Content-Type': file.type
-                    });
-                    rs.pipe(zlib.createGzip()).pipe(res);
-
-                } else {
-                    res.writeHead(200, {});
-                    rs.pipe(res);
-                }
-            } catch (err) {
-                console.error('Cannot read file ' + fileId);
-                throw err;
-            }
-
-        } else {
-            next();
-        }
-    });
-}
