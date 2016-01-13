@@ -67,11 +67,12 @@ UploadFS.store.Local = function (options) {
             if (typeof callback !== 'function') {
                 callback = function (err) {
                     if (err) {
-                        console.error(err);
+                        console.error(err.message);
                     }
                 }
             }
-            fs.unlink(this.getFilePath(fileId), callback);
+            var path = this.getFilePath(fileId);
+            path && fs.unlink(this.getFilePath(fileId), callback);
         };
 
         /**
