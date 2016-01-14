@@ -22,10 +22,10 @@ Specify the **path** where you want to save the files.
 Be aware that you must not change the path, neither the name of the store
 if you have already saved files or you will break the URLs.
 ```js
-Meteor.photos = new Mongo.Collection('photos');
+Photos = new Mongo.Collection('photos');
 
-Meteor.photosStore = new UploadFS.store.Local({
-    collection: Meteor.photos,
+PhotosStore = new UploadFS.store.Local({
+    collection: Photos,
     name: 'photos',
     path: '/uploads/photos'
 });

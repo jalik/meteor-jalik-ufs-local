@@ -39,13 +39,12 @@ UploadFS.store.Local = function (options) {
     /**
      * Returns the file path
      * @param fileId
+     * @param file
      * @return {string}
      */
-    store.getFilePath = function (fileId) {
-        var file = this.getCollection().findOne(fileId, {
-            fields: {extension: 1}
-        });
-        return file && this.getPath() + '/' + fileId + '.' + file.extension;
+    store.getFilePath = function (fileId, file) {
+        file = file || store.getCollection().findOne(fileId, {fields: {extension: 1}});
+        return file && store.getPath() + '/' + fileId + '.' + file.extension;
     };
 
     /**
@@ -71,17 +70,18 @@ UploadFS.store.Local = function (options) {
                     }
                 }
             }
-            var path = this.getFilePath(fileId);
-            path && fs.unlink(this.getFilePath(fileId), callback);
+            var path = store.getFilePath(fileId);
+            path && fs.unlink(store.getFilePath(fileId), callback);
         };
 
         /**
          * Returns the file read stream
          * @param fileId
+         * @param file
          * @return {*}
          */
-        store.getReadStream = function (fileId) {
-            return fs.createReadStream(this.getFilePath(fileId), {
+        store.getReadStream = function (fileId, file) {
+            return fs.createReadStream(store.getFilePath(fileId, file), {
                 flags: 'r',
                 encoding: null,
                 autoClose: true
@@ -91,10 +91,11 @@ UploadFS.store.Local = function (options) {
         /**
          * Returns the file write stream
          * @param fileId
+         * @param file
          * @return {*}
          */
-        store.getWriteStream = function (fileId) {
-            return fs.createWriteStream(this.getFilePath(fileId), {
+        store.getWriteStream = function (fileId, file) {
+            return fs.createWriteStream(store.getFilePath(fileId, file), {
                 flags: 'a',
                 encoding: null
             });
