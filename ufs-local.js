@@ -11,30 +11,49 @@ if (Meteor.isServer) {
 UploadFS.store.Local = function (options) {
     // Set default options
     options = _.extend({
-        path: 'ufs/uploads'
+        mode: '0744',
+        path: 'ufs/uploads',
+        writeMode: '0744'
     }, options);
 
     // Check options
+    if (typeof options.mode !== 'string') {
+        throw new TypeError('mode is not a string');
+    }
     if (typeof options.path !== 'string') {
         throw new TypeError('path is not a string');
     }
+    if (typeof options.writeMode !== 'string') {
+        throw new TypeError('writeMode is not a string');
+    }
 
     // Private attributes
+    var mode = options.mode;
     var path = options.path;
+    var writeMode = options.writeMode;
 
-    // Create the upload dir
     if (Meteor.isServer) {
-        mkdirp(path, function (err) {
+        fs.stat(path, function (err) {
             if (err) {
-                console.error('ufs: error creating store ' + path);
+                // Create the directory
+                mkdirp(path, {mode: mode}, function (err) {
+                    if (err) {
+                        console.error('ufs: cannot create store at ' + path + ' (' + err.message + ')');
+                    } else {
+                        console.info('ufs: store created at ' + path);
+                    }
+                });
             } else {
-                console.info('ufs: created store ' + path);
+                // Set directory permissions
+                fs.chmod(path, mode, function (err) {
+                    err && console.error('ufs: cannot set store permissions ' + mode + ' (' + err.message + ')');
+                });
             }
         });
     }
 
     // Create the store
-    var store = new UploadFS.Store(options);
+    var self = new UploadFS.Store(options);
 
     /**
      * Returns the file path
@@ -42,17 +61,18 @@ UploadFS.store.Local = function (options) {
      * @param file
      * @return {string}
      */
-    store.getFilePath = function (fileId, file) {
-        file = file || store.getCollection().findOne(fileId, {fields: {extension: 1}});
-        return file && store.getPath() + '/' + fileId + '.' + file.extension;
+    self.getFilePath = function (fileId, file) {
+        file = file || self.getCollection().findOne(fileId, {fields: {extension: 1}});
+        return file && self.getPath(fileId + (file.extension ? '.' + file.extension : ''));
     };
 
     /**
-     * Returns the path where files are saved
+     * Returns the path or sub path
+     * @param file
      * @return {string}
      */
-    store.getPath = function () {
-        return path;
+    self.getPath = function (file) {
+        return path + (file ? '/' + file : '');
     };
 
 
@@ -62,16 +82,19 @@ UploadFS.store.Local = function (options) {
          * @param fileId
          * @param callback
          */
-        store.delete = function (fileId, callback) {
+        self.delete = function (fileId, callback) {
+            var path = self.getFilePath(fileId);
+
             if (typeof callback !== 'function') {
                 callback = function (err) {
-                    if (err) {
-                        console.error(err.message);
-                    }
+                    err && console.error('ufs: cannot delete file "' + fileId + '" at ' + path + ' (' + err.message + ')');
                 }
             }
-            var path = store.getFilePath(fileId);
-            path && fs.unlink(store.getFilePath(fileId), callback);
+            fs.stat(path, Meteor.bindEnvironment(function (err, stat) {
+                if (!err && stat && stat.isFile()) {
+                    fs.unlink(path, Meteor.bindEnvironment(callback));
+                }
+            }));
         };
 
         /**
@@ -80,8 +103,8 @@ UploadFS.store.Local = function (options) {
          * @param file
          * @return {*}
          */
-        store.getReadStream = function (fileId, file) {
-            return fs.createReadStream(store.getFilePath(fileId, file), {
+        self.getReadStream = function (fileId, file) {
+            return fs.createReadStream(self.getFilePath(fileId, file), {
                 flags: 'r',
                 encoding: null,
                 autoClose: true
@@ -94,13 +117,14 @@ UploadFS.store.Local = function (options) {
          * @param file
          * @return {*}
          */
-        store.getWriteStream = function (fileId, file) {
-            return fs.createWriteStream(store.getFilePath(fileId, file), {
+        self.getWriteStream = function (fileId, file) {
+            return fs.createWriteStream(self.getFilePath(fileId, file), {
                 flags: 'a',
-                encoding: null
+                encoding: null,
+                mode: writeMode
             });
         };
     }
 
-    return store;
+    return self;
 };

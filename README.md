@@ -2,7 +2,7 @@
 
 A file system store for UploadFS.
 
-### Installation
+## Installation
 
 To install the package, execute this command in the root of your project :
 ```
@@ -14,7 +14,7 @@ If later you want to remove the package :
 meteor remove jalik:ufs-local
 ```
 
-### Create a Store
+## Creating a Store
 
 **The code below is available on the client and the server.**
 
@@ -27,6 +27,20 @@ Photos = new Mongo.Collection('photos');
 PhotosStore = new UploadFS.store.Local({
     collection: Photos,
     name: 'photos',
-    path: '/uploads/photos'
+    path: '/uploads/photos',
+    mode: '0744', // directory permissions
+    writeMode: '0744' // file permissions
 });
+```
+
+## Getting store path
+
+```js
+var path = PhotosStore.getPath();
+```
+
+## Getting file path
+
+```js
+var path = PhotosStore.getFilePath(fileId);
 ```
