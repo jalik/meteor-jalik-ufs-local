@@ -92,7 +92,11 @@ UploadFS.store.Local = function (options) {
             }
             fs.stat(path, Meteor.bindEnvironment(function (err, stat) {
                 if (!err && stat && stat.isFile()) {
-                    fs.unlink(path, Meteor.bindEnvironment(callback));
+                    fs.unlink(path, Meteor.bindEnvironment(function(){
+                        self.getCollection().remove(fileId);
+                        UploadFS.tokens.remove({fileId: fileId});
+                        callback.call(this);
+                    }));
                 }
             }));
         };
