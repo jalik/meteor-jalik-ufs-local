@@ -1,7 +1,6 @@
-if (Meteor.isServer) {
-    var fs = Npm.require('fs');
-    var mkdirp = Npm.require('mkdirp');
-}
+import {_} from 'meteor/underscore';
+import {check} from 'meteor/check';
+import {Meteor} from 'meteor/meteor';
 
 /**
  * File system store
@@ -9,7 +8,7 @@ if (Meteor.isServer) {
  * @constructor
  */
 UploadFS.store.Local = function (options) {
-    // Set default options
+    // Default options
     options = _.extend({
         mode: '0744',
         path: 'ufs/uploads',
@@ -28,13 +27,17 @@ UploadFS.store.Local = function (options) {
     }
 
     // Private attributes
-    var mode = options.mode;
-    var path = options.path;
-    var writeMode = options.writeMode;
+    let mode = options.mode;
+    let path = options.path;
+    let writeMode = options.writeMode;
 
     if (Meteor.isServer) {
+        const fs = Npm.require('fs');
+
         fs.stat(path, function (err) {
             if (err) {
+                const mkdirp = Npm.require('mkdirp');
+
                 // Create the directory
                 mkdirp(path, {mode: mode}, function (err) {
                     if (err) {
@@ -53,7 +56,7 @@ UploadFS.store.Local = function (options) {
     }
 
     // Create the store
-    var self = new UploadFS.Store(options);
+    let self = new UploadFS.Store(options);
 
     /**
      * Returns the file path
@@ -83,16 +86,17 @@ UploadFS.store.Local = function (options) {
          * @param callback
          */
         self.delete = function (fileId, callback) {
-            var path = self.getFilePath(fileId);
+            let path = self.getFilePath(fileId);
 
             if (typeof callback !== 'function') {
                 callback = function (err) {
                     err && console.error('ufs: cannot delete file "' + fileId + '" at ' + path + ' (' + err.message + ')');
                 }
             }
+            const fs = Npm.require('fs');
             fs.stat(path, Meteor.bindEnvironment(function (err, stat) {
                 if (!err && stat && stat.isFile()) {
-                    fs.unlink(path, Meteor.bindEnvironment(function(){
+                    fs.unlink(path, Meteor.bindEnvironment(function () {
                         self.getCollection().remove(fileId);
                         callback.call(this);
                     }));
@@ -104,13 +108,18 @@ UploadFS.store.Local = function (options) {
          * Returns the file read stream
          * @param fileId
          * @param file
+         * @param options
          * @return {*}
          */
-        self.getReadStream = function (fileId, file) {
+        self.getReadStream = function (fileId, file, options) {
+            const fs = Npm.require('fs');
+            options = _.extend({}, options);
             return fs.createReadStream(self.getFilePath(fileId, file), {
                 flags: 'r',
                 encoding: null,
-                autoClose: true
+                autoClose: true,
+                start: options.start,
+                end: options.end
             });
         };
 
@@ -118,13 +127,17 @@ UploadFS.store.Local = function (options) {
          * Returns the file write stream
          * @param fileId
          * @param file
+         * @param options
          * @return {*}
          */
-        self.getWriteStream = function (fileId, file) {
+        self.getWriteStream = function (fileId, file, options) {
+            const fs = Npm.require('fs');
+            options = _.extend({}, options);
             return fs.createWriteStream(self.getFilePath(fileId, file), {
                 flags: 'a',
                 encoding: null,
-                mode: writeMode
+                mode: writeMode,
+                start: options.start
             });
         };
     }

@@ -22,9 +22,9 @@ Specify the **path** where you want to save the files.
 Be aware that you must not change the path, neither the name of the store
 if you have already saved files or you will break the URLs.
 ```js
-Photos = new Mongo.Collection('photos');
+let Photos = new Mongo.Collection('photos');
 
-PhotosStore = new UploadFS.store.Local({
+let PhotoStore = new UploadFS.store.Local({
     collection: Photos,
     name: 'photos',
     path: '/uploads/photos',
@@ -36,11 +36,11 @@ PhotosStore = new UploadFS.store.Local({
 ## Getting store path
 
 ```js
-var path = PhotosStore.getPath();
+let path = PhotoStore.getPath();
 ```
 
 ## Getting file path
 
 ```js
-var path = PhotosStore.getFilePath(fileId);
+let path = PhotoStore.getFilePath(fileId);
 ```
