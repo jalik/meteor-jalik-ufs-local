@@ -33,7 +33,7 @@ let PhotoStore = new UploadFS.store.Local({
 });
 ```
 
-## Getting store path
+## Getting store local path
 
 ```js
 let path = PhotoStore.getPath();
