@@ -1,6 +1,6 @@
-# UploadFS-Local
+# UploadFS Local Store
 
-A file system store for UploadFS.
+A local file system store for UploadFS.
 
 ## Installation
 
@@ -22,9 +22,14 @@ Specify the **path** where you want to save the files.
 Be aware that you must not change the path, neither the name of the store
 if you have already saved files or you will break the URLs.
 ```js
-let Photos = new Mongo.Collection('photos');
+import {Mongo} from 'meteor/mongo';
+import {LocalStore} from 'meteor/jalik:ufs-local';
 
-let PhotoStore = new UploadFS.store.Local({
+// Declare store collection
+const Photos = new Mongo.Collection('photos');
+
+// Declare store
+const PhotoStore = new LocalStore({
     collection: Photos,
     name: 'photos',
     path: '/uploads/photos',
@@ -44,3 +49,7 @@ let path = PhotoStore.getPath();
 ```js
 let path = PhotoStore.getFilePath(fileId);
 ```
+
+## License
+
+This package is released under the [MIT License](http://www.opensource.org/licenses/MIT).
