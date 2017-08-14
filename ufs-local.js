@@ -158,6 +158,24 @@ export class LocalStore extends UploadFS.Store {
                     start: options.start
                 });
             };
+
+            /**
+             * Writes a symbolic link
+             * @param linkFileId
+             * @param newFileId
+             * @param callback
+             * @param errorCallback
+             */
+            this.createSymbolicLink = function (linkFileId, newFileId, callback, errorCallback) {
+                const fs = Npm.require('fs');
+                const original = self.getFilePath(linkFileId);
+                const symlink = self.getFilePath(newFileId);
+                if (fs.existsSync(original)) {
+                  return fs.symlink(original, symlink, callback);
+                } else {
+                  return errorCallback({message: 'Symlink Error: Original file cannot be found'});
+                }
+            };
         }
     }
 
