@@ -23,9 +23,8 @@
  *
  */
 
-import {Meteor} from 'meteor/meteor';
-import {UploadFS} from 'meteor/jalik:ufs';
-
+import { UploadFS } from 'meteor/jalik:ufs';
+import { Meteor } from 'meteor/meteor';
 
 /**
  * File system store
@@ -34,141 +33,140 @@ import {UploadFS} from 'meteor/jalik:ufs';
  */
 export class LocalStore extends UploadFS.Store {
 
-    constructor(options) {
-        // Default options
-        options = Object.assign({
-            mode: '0744',
-            path: 'ufs/uploads',
-            writeMode: '0744'
-        }, options);
+  constructor(options) {
+    // Default options
+    options = Object.assign({
+      mode: '0744',
+      path: 'ufs/uploads',
+      writeMode: '0744',
+    }, options);
 
-        // Check options
-        if (typeof options.mode !== "string") {
-            throw new TypeError("LocalStore: mode is not a string");
+    // Check options
+    if (typeof options.mode !== 'string') {
+      throw new TypeError('LocalStore: mode is not a string');
+    }
+    if (typeof options.path !== 'string') {
+      throw new TypeError('LocalStore: path is not a string');
+    }
+    if (typeof options.writeMode !== 'string') {
+      throw new TypeError('LocalStore: writeMode is not a string');
+    }
+
+    super(options);
+    let self = this;
+
+    // Private attributes
+    let mode = options.mode;
+    let path = options.path;
+    let writeMode = options.writeMode;
+
+    if (Meteor.isServer) {
+      const fs = Npm.require('fs');
+
+      fs.stat(path, function (err) {
+        if (err) {
+          const mkdirp = Npm.require('mkdirp');
+
+          // Create the directory
+          mkdirp(path, { mode: mode }, function (err) {
+            if (err) {
+              console.error(`LocalStore: cannot create store at ${path} (${err.message})`);
+            } else {
+              console.info(`LocalStore: store created at ${path}`);
+            }
+          });
+        } else {
+          // Set directory permissions
+          fs.chmod(path, mode, function (err) {
+            err && console.error(`LocalStore: cannot set store permissions ${mode} (${err.message})`);
+          });
         }
-        if (typeof options.path !== "string") {
-            throw new TypeError("LocalStore: path is not a string");
-        }
-        if (typeof options.writeMode !== "string") {
-            throw new TypeError("LocalStore: writeMode is not a string");
-        }
-
-        super(options);
-        let self = this;
-
-        // Private attributes
-        let mode = options.mode;
-        let path = options.path;
-        let writeMode = options.writeMode;
-
-        if (Meteor.isServer) {
-            const fs = Npm.require('fs');
-
-            fs.stat(path, function (err) {
-                if (err) {
-                    const mkdirp = Npm.require('mkdirp');
-
-                    // Create the directory
-                    mkdirp(path, {mode: mode}, function (err) {
-                        if (err) {
-                            console.error(`LocalStore: cannot create store at ${path} (${err.message})`);
-                        } else {
-                            console.info(`LocalStore: store created at ${path}`);
-                        }
-                    });
-                } else {
-                    // Set directory permissions
-                    fs.chmod(path, mode, function (err) {
-                        err && console.error(`LocalStore: cannot set store permissions ${mode} (${err.message})`);
-                    });
-                }
-            });
-        }
-
-        /**
-         * Returns the path or sub path
-         * @param file
-         * @return {string}
-         */
-        this.getPath = function (file) {
-            return path + (file ? `/${file}` : '');
-        };
-
-
-        if (Meteor.isServer) {
-            /**
-             * Removes the file
-             * @param fileId
-             * @param callback
-             */
-            this.delete = function (fileId, callback) {
-                let path = this.getFilePath(fileId);
-
-                if (typeof callback !== 'function') {
-                    callback = function (err) {
-                        err && console.error(`LocalStore: cannot delete file "${fileId}" at ${path} (${err.message})`);
-                    }
-                }
-                const fs = Npm.require('fs');
-                fs.stat(path, Meteor.bindEnvironment(function (err, stat) {
-                    if (!err && stat && stat.isFile()) {
-                        fs.unlink(path, Meteor.bindEnvironment(function () {
-                            self.getCollection().remove(fileId);
-                            callback.call(self);
-                        }));
-                    }
-                }));
-            };
-
-            /**
-             * Returns the file read stream
-             * @param fileId
-             * @param file
-             * @param options
-             * @return {*}
-             */
-            this.getReadStream = function (fileId, file, options) {
-                const fs = Npm.require('fs');
-                options = Object.assign({}, options);
-                return fs.createReadStream(self.getFilePath(fileId, file), {
-                    flags: 'r',
-                    encoding: null,
-                    autoClose: true,
-                    start: options.start,
-                    end: options.end
-                });
-            };
-
-            /**
-             * Returns the file write stream
-             * @param fileId
-             * @param file
-             * @param options
-             * @return {*}
-             */
-            this.getWriteStream = function (fileId, file, options) {
-                const fs = Npm.require('fs');
-                options = Object.assign({}, options);
-                return fs.createWriteStream(self.getFilePath(fileId, file), {
-                    flags: 'a',
-                    encoding: null,
-                    mode: writeMode,
-                    start: options.start
-                });
-            };
-        }
+      });
     }
 
     /**
-     * Returns the file path
-     * @param fileId
+     * Returns the path or sub path
      * @param file
      * @return {string}
      */
-    getFilePath(fileId, file) {
-        file = file || this.getCollection().findOne(fileId, {fields: {extension: 1}});
-        return file && this.getPath(fileId + (file.extension ? `.${file.extension }` : ''));
+    this.getPath = function (file) {
+      return path + (file ? `/${file}` : '');
+    };
+
+    if (Meteor.isServer) {
+      /**
+       * Removes the file
+       * @param fileId
+       * @param callback
+       */
+      this.delete = function (fileId, callback) {
+        let path = this.getFilePath(fileId);
+
+        if (typeof callback !== 'function') {
+          callback = function (err) {
+            err && console.error(`LocalStore: cannot delete file "${fileId}" at ${path} (${err.message})`);
+          };
+        }
+        const fs = Npm.require('fs');
+        fs.stat(path, Meteor.bindEnvironment(function (err, stat) {
+          if (!err && stat && stat.isFile()) {
+            fs.unlink(path, Meteor.bindEnvironment(function () {
+              self.getCollection().remove(fileId);
+              callback.call(self);
+            }));
+          }
+        }));
+      };
+
+      /**
+       * Returns the file read stream
+       * @param fileId
+       * @param file
+       * @param options
+       * @return {*}
+       */
+      this.getReadStream = function (fileId, file, options) {
+        const fs = Npm.require('fs');
+        options = Object.assign({}, options);
+        return fs.createReadStream(self.getFilePath(fileId, file), {
+          flags: 'r',
+          encoding: null,
+          autoClose: true,
+          start: options.start,
+          end: options.end,
+        });
+      };
+
+      /**
+       * Returns the file write stream
+       * @param fileId
+       * @param file
+       * @param options
+       * @return {*}
+       */
+      this.getWriteStream = function (fileId, file, options) {
+        const fs = Npm.require('fs');
+        options = Object.assign({}, options);
+        return fs.createWriteStream(self.getFilePath(fileId, file), {
+          flags: 'a',
+          encoding: null,
+          mode: writeMode,
+          start: options.start,
+        });
+      };
     }
+  }
+
+  /**
+   * Returns the file path
+   * @param fileId
+   * @param file
+   * @return {string}
+   */
+  getFilePath(fileId, file) {
+    file = file || this.getCollection().findOne(fileId, { fields: { extension: 1 } });
+    return file && this.getPath(fileId + (file.extension ? `.${file.extension}` : ''));
+  }
 }
 
 // Add store to UFS namespace
