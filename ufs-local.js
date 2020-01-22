@@ -23,8 +23,6 @@
  *
  */
 
-import {_} from 'meteor/underscore';
-import {check} from 'meteor/check';
 import {Meteor} from 'meteor/meteor';
 import {UploadFS} from 'meteor/jalik:ufs';
 
@@ -38,7 +36,7 @@ export class LocalStore extends UploadFS.Store {
 
     constructor(options) {
         // Default options
-        options = _.extend({
+        options = Object.assign({
             mode: '0744',
             path: 'ufs/uploads',
             writeMode: '0744'
@@ -131,7 +129,7 @@ export class LocalStore extends UploadFS.Store {
              */
             this.getReadStream = function (fileId, file, options) {
                 const fs = Npm.require('fs');
-                options = _.extend({}, options);
+                options = Object.assign({}, options);
                 return fs.createReadStream(self.getFilePath(fileId, file), {
                     flags: 'r',
                     encoding: null,
@@ -150,31 +148,13 @@ export class LocalStore extends UploadFS.Store {
              */
             this.getWriteStream = function (fileId, file, options) {
                 const fs = Npm.require('fs');
-                options = _.extend({}, options);
+                options = Object.assign({}, options);
                 return fs.createWriteStream(self.getFilePath(fileId, file), {
                     flags: 'a',
                     encoding: null,
                     mode: writeMode,
                     start: options.start
                 });
-            };
-
-            /**
-             * Writes a symbolic link
-             * @param linkFileId
-             * @param newFileId
-             * @param callback
-             * @param errorCallback
-             */
-            this.createSymbolicLink = function (linkFileId, newFileId, callback, errorCallback) {
-                const fs = Npm.require('fs');
-                const original = self.getFilePath(linkFileId);
-                const symlink = self.getFilePath(newFileId);
-                if (fs.existsSync(original)) {
-                  return fs.symlink(original, symlink, callback);
-                } else {
-                  return errorCallback({message: 'Symlink Error: Original file cannot be found'});
-                }
             };
         }
     }

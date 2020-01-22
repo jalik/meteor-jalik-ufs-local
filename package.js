@@ -24,25 +24,24 @@
  */
 
 Package.describe({
-    name: "jalik:ufs-local",
-    version: "0.2.10",
-    author: "karl.stein.pro@gmail.com",
-    summary: "File system based store for UploadFS",
-    homepage: "https://github.com/jalik/jalik-ufs-local",
-    git: "https://github.com/jalik/jalik-ufs-local.git",
-    documentation: "README.md",
-    license: "MIT"
+  name: 'jalik:ufs-local',
+  version: '1.0.0',
+  author: 'karl.stein.pro@gmail.com',
+  summary: 'File system based store for UploadFS',
+  homepage: 'https://github.com/jalik/jalik-ufs-local',
+  git: 'https://github.com/jalik/jalik-ufs-local.git',
+  documentation: 'README.md',
+  license: 'MIT',
 });
 
 Package.onUse(function (api) {
-    api.versionsFrom('1.4.2.6');
-    api.use("check@1.2.1");
-    api.use("ecmascript");
-    api.use('jalik:ufs@0.7.4_1');
-    api.use('underscore@1.0.10');
-    api.mainModule("ufs-local.js");
+  api.versionsFrom('1.9');
+  api.use('ecmascript');
+  api.use('mongo');
+  api.use('jalik:ufs@1.0.0');
+  api.mainModule('ufs-local.js');
 });
 
 Npm.depends({
-    mkdirp: "0.3.5"
+  mkdirp: '0.3.5',
 });
