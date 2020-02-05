@@ -25,7 +25,7 @@
 
 Package.describe({
   name: 'jalik:ufs-local',
-  version: '1.0.1',
+  version: '1.0.2',
   author: 'karl.stein.pro@gmail.com',
   summary: 'File system based store for UploadFS',
   homepage: 'https://github.com/jalik/jalik-ufs-local',
@@ -38,7 +38,7 @@ Package.onUse(function (api) {
   api.versionsFrom('1.9');
   api.use('ecmascript');
   api.use('mongo');
-  api.use('jalik:ufs@1.0.1');
+  api.use('jalik:ufs@1.0.2');
   api.mainModule('ufs-local.js');
 });
 
