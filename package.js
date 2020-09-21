@@ -38,7 +38,7 @@ Package.onUse(function (api) {
   api.versionsFrom('1.9');
   api.use('ecmascript');
   api.use('mongo');
-  api.use('jalik:ufs@1.0.2');
+  api.use('jalik:ufs@1.0.3');
   api.mainModule('ufs-local.js');
 });
 
