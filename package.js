@@ -35,10 +35,10 @@ Package.describe({
 });
 
 Package.onUse(function (api) {
-  api.versionsFrom('1.9');
+  api.versionsFrom('2.6.1');
   api.use('ecmascript');
   api.use('mongo');
-  api.use('jalik:ufs@1.0.3');
+  api.use('jalik:ufs@1.0.4');
   api.mainModule('ufs-local.js');
 });
 
